@@ -107,7 +107,7 @@ class FTOCP(object):
 			print(G_in)
 			print("E_in: ")
 			print(E_in)
-			print("w_in: ", w_in)			
+			print("w_in: ", w_in)
 
 		self.G_in = sparse.csc_matrix(G_in)
 		self.E_in = E_in
@@ -131,38 +131,29 @@ class FTOCP(object):
 		self.q = q
 		self.H = sparse.csc_matrix(2 * H)  #  Need to multiply by two because CVX considers 1/2 in front of quadratic cost
 
-	def buildEqConstr(self):  
-		G_eq_all = [None] * self.N
-		E_eq_all = [None] * self.N
-		C_eq_all = [None] * self.N
+	def buildEqConstr(self):          
+		Gu   = linalg.block_diag(*([-self.B[0]]*self.N))
+		Gx1  = linalg.block_diag(*([np.eye(self.n)]*self.N))
+		Gx2  = linalg.block_diag(*[-a for a in self.A[:-1]])
+		Gx2  = np.vstack((np.zeros((self.n,self.n*(self.N-1))),Gx2))
+		Gx2  = np.hstack((Gx2,np.zeros((self.n*self.N,self.n))))
+		G_eq = np.hstack((Gx2+Gx1,Gu))
+  
+		E_eq = self.A[0].T
+		E_eq = np.hstack((E_eq,np.zeros((self.n,self.N*self.n-self.n)))).T
         
-		for i, (a,b,c) in enumerate(zip(self.A,self.B,self.C)): #not for loop but different stack
-			Gu   = linalg.block_diag(*([-b]*self.N))
-			Gx1  = linalg.block_diag(*([np.eye(self.n)]*self.N))
-			Gx2  = linalg.block_diag(*([-a]*(self.N-1)))
-			Gx2  = np.vstack((np.zeros((self.n,self.n*(self.N-1))),Gx2))
-			Gx2  = np.hstack((Gx2,np.zeros((self.n*self.N,self.n))))
-			G_eq = np.hstack((Gx2+Gx1,Gu))
-			G_eq_all[i] = G_eq
-                            
-			E_eq = a.T
-			E_eq = np.hstack((E_eq,np.zeros((self.n,self.N*self.n-self.n)))).T
-			E_eq_all[i] = E_eq
-        
-			C_eq = c.T
-			C_eq = np.hstack((C_eq,np.zeros((self.N*self.n-self.n))))
-			C_eq_all[i] = C_eq
+		C_eq = np.concatenate(self.C).T
 
-			if self.printLevel >= 2:
-				print("G_eq: ")
-				print(G_eq)
-				print("E_eq: ")
-				print(E_eq)
-				print("C_eq: ", C_eq)
+		if self.printLevel >= 2:
+			print("G_eq: ")
+			print(G_eq)
+			print("E_eq: ")
+			print(E_eq)
+			print("C_eq: ", C_eq)
 
-			self.C_eq = C_eq
-			self.G_eq = sparse.csc_matrix(G_eq)
-			self.E_eq = E_eq
+		self.C_eq = C_eq
+		self.G_eq = sparse.csc_matrix(G_eq)
+		self.E_eq = E_eq
 
 	def osqp_solve_qp(self, P, q, G= None, h=None, A=None, b=None, initvals=None):
 		""" 

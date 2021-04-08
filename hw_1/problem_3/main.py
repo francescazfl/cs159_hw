@@ -59,5 +59,3 @@ plt.xlim(-15,15)
 plt.ylim(-15,15)
 plt.savefig("problem_3.png")
 plt.show()
-
-
