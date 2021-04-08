@@ -136,7 +136,7 @@ class FTOCP(object):
 		E_eq_all = [None] * self.N
 		C_eq_all = [None] * self.N
         
-		for i, (a,b,c) in enumerate(zip(self.A,self.B,self.C)):
+		for i, (a,b,c) in enumerate(zip(self.A,self.B,self.C)): #not for loop but different stack
 			Gu   = linalg.block_diag(*([-b]*self.N))
 			Gx1  = linalg.block_diag(*([np.eye(self.n)]*self.N))
 			Gx2  = linalg.block_diag(*([-a]*(self.N-1)))
@@ -153,16 +153,16 @@ class FTOCP(object):
 			C_eq = np.hstack((C_eq,np.zeros((self.N*self.n-self.n))))
 			C_eq_all[i] = C_eq
 
-		if self.printLevel >= 2:
-			print("G_eq: ")
-			print(G_eq)
-			print("E_eq: ")
-			print(E_eq)
-			print("C_eq: ", C_eq)
+			if self.printLevel >= 2:
+				print("G_eq: ")
+				print(G_eq)
+				print("E_eq: ")
+				print(E_eq)
+				print("C_eq: ", C_eq)
 
-		self.C_eq = C_eq
-		self.G_eq = sparse.csc_matrix(G_eq)
-		self.E_eq = E_eq
+			self.C_eq = C_eq
+			self.G_eq = sparse.csc_matrix(G_eq)
+			self.E_eq = E_eq
 
 	def osqp_solve_qp(self, P, q, G= None, h=None, A=None, b=None, initvals=None):
 		""" 
