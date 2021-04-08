@@ -134,7 +134,7 @@ class FTOCP(object):
 	def buildEqConstr(self):          
 		Gu   = linalg.block_diag(*([-self.B[0]]*self.N))
 		Gx1  = linalg.block_diag(*([np.eye(self.n)]*self.N))
-		Gx2  = linalg.block_diag(*[-a for a in self.A[:-1]])
+		Gx2  = linalg.block_diag(*[-a for a in self.A[1:]])
 		Gx2  = np.vstack((np.zeros((self.n,self.n*(self.N-1))),Gx2))
 		Gx2  = np.hstack((Gx2,np.zeros((self.n*self.N,self.n))))
 		G_eq = np.hstack((Gx2+Gx1,Gu))
