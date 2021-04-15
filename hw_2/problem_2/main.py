@@ -13,10 +13,13 @@ A = np.array([[1.2, 1],
 B = np.array([[0], 
 			  [1]]);
 n = 2; d = 1;
-x0      = np.array([2, -1]).T   # initial condition
+# x0      = np.array([2, -1]).T   # initial condition
+x0      = np.array([13, -5.5]).T
 sys     = system(A, B, x0)
 maxTime = 25
 N       = 3
+
+# for N in range(2,8):
 Q       = np.eye(n)
 R       = np.eye(d)
 
@@ -27,7 +30,6 @@ bx = np.array([15,15]*(2))
 # Input constraint set U = \{ u : F_u u \leq b_u \}
 Fu = np.vstack((np.eye(d), -np.eye(d)))
 bu = np.array([1]*2)
-
 
 # # =======================================================================================
 # # ============== Approach 1 =============================================================
@@ -123,37 +125,38 @@ if mpcApproach2.feasible == 1:
 	plt.xlabel('$x_1$')
 	plt.ylabel('$x_2$')
 	plt.legend()
-	plt.title("N = " + str(N))
+	plt.title("x_0 = {0}, N = {1}".format(str(x0), str(N)))
 
 plt.show()
 
-# # =======================================================================================
-# # ============== Compute the Region of Attraction =======================================
-# # =======================================================================================
 
-# # First we over-approximate the terminal set used for approach 1 (We do so to have a set which is full dimension)
-# Ff = np.vstack((np.eye(n), -np.eye(n)))
-# bf = np.hstack((np.ones(n), np.ones(n)))*0.01
-# terminalSetApproach1 = polytope(Ff, bf)
+# =======================================================================================
+# ============== Compute the Region of Attraction =======================================
+# =======================================================================================
 
-# # Compute the N-Step Controllable sets for approach 1 and approach 2
-# NStepControllable = []
-# for terminalSet in [terminalSetApproach1, terminalSetApproach2]:
-# 	F, b = terminalSet.NStepPreAB(A, B, Fu, bu, N)
-# 	NStepControllable.append(polytope(F, b))
+# First we over-approximate the terminal set used for approach 1 (We do so to have a set which is full dimension)
+Ff = np.vstack((np.eye(n), -np.eye(n)))
+bf = np.hstack((np.ones(n), np.ones(n)))*0.01
+terminalSetApproach1 = polytope(Ff, bf)
 
-# # Plot the results
-# plt.figure()
-# terminalSetApproach2.plot2DPolytope('r', '$\mathcal{O}_\infty$')
-# NStepControllable[0].plot2DPolytope('b', '$\mathcal{K}_3(\{0\})$')
-# NStepControllable[1].plot2DPolytope('k', '$\mathcal{K}_3(\mathcal{O}_\infty)$')
-# plt.plot(..., 'or', label='Initial condition part 1')
-# plt.plot(..., 'sb', label='Initial condition part 2')
-# plt.xlabel('$x_1$')
-# plt.ylabel('$x_2$')
-# plt.legend()
+# Compute the N-Step Controllable sets for approach 1 and approach 2
+NStepControllable = []
+for terminalSet in [terminalSetApproach1, terminalSetApproach2]:
+	F, b = terminalSet.NStepPreAB(A, B, Fu, bu, N)
+	NStepControllable.append(polytope(F, b))
 
-# plt.show()
+# Plot the results
+plt.figure()
+terminalSetApproach2.plot2DPolytope('r', '$\mathcal{O}_\infty$')
+NStepControllable[0].plot2DPolytope('b', '$\mathcal{K}_3(\{0\})$')
+NStepControllable[1].plot2DPolytope('k', '$\mathcal{K}_3(\mathcal{O}_\infty)$')
+plt.plot(..., 'or', label='Initial condition part 1')
+plt.plot(..., 'sb', label='Initial condition part 2')
+plt.xlabel('$x_1$')
+plt.ylabel('$x_2$')
+plt.legend()
+
+plt.show()
 
 # explan stabilty
 # 2.1 two sentences - if processed the proof it is only = 0 when you actually reach the goal, 
