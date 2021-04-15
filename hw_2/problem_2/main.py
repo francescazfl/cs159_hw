@@ -162,8 +162,8 @@ plt.ylabel('$x_2$')
 plt.legend()
 
 plt.title('Comparison of region of attractions for varying terminals sets')
-plt.show()
 plt.savefig('HW2_pb2_2.png')
+plt.show()
 
 # explan stabilty
 # 2.1 two sentences - if processed the proof it is only = 0 when you actually reach the goal, 
