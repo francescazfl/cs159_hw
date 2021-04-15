@@ -34,42 +34,47 @@ bu = np.array([1]*2)
 # # =======================================================================================
 # # ============== Approach 1 =============================================================
 # # =======================================================================================
-# # Hint: the terminal set is X_f =\{x | F_f x <= b_f\}
-# Ff = ...
-# bf = ...
-# Qf = ...
+# Hint: the terminal set is X_f =\{x | F_f x <= b_f\}
+# These are derived by thinking about the number of minimal intersecting polytopes 
+# extract only the origin
+Ff = np.array( [ [1,  -1],
+                 [-1,  1],
+                 [1,   1] ] )
+bf = np.array([[0], [0], [0]]) 
+Qf = np.array([ [1, 1],
+                [1, 1] ] ) #This doesn't matter since \mathscr{X}_f = {0}
 
 printLevel = 1
-# mpcApproach1 = FTOCP(N, A, B, Q, R, Qf, Fx, bx, Fu, bu, Ff, bf, printLevel)
+mpcApproach1 = FTOCP(N, A, B, Q, R, Qf, Fx, bx, Fu, bu, Ff, bf, printLevel)
 
-# # Run a closed-loop simulation
-# sys.reset_IC() # Reset initial conditions
-# xPredApp1 = []
-# for t in range(0,maxTime): # Time loop
-# 	xt = sys.x[-1]
-# 	ut = mpcApproach1.solve(xt)
-# 	if mpcApproach1.feasible == 0:
-# 		print("============ The MPC problem is not feasible")
-# 		break
-# 	xPredApp1.append(mpcApproach1.xPred)
-# 	sys.applyInput(ut)
+# Run a closed-loop simulation
+sys.reset_IC() # Reset initial conditions
+xPredApp1 = []
+for t in range(0,maxTime): # Time loop
+	xt = sys.x[-1]
+	ut = mpcApproach1.solve(xt)
+	if mpcApproach1.feasible == 0:
+		print("============ The MPC problem is not feasible")
+		break
+	xPredApp1.append(mpcApproach1.xPred)
+	sys.applyInput(ut)
 
-# x_cl_1 = np.array(sys.x)
+x_cl_1 = np.array(sys.x)
 
-# # Plot the results if the MPC problem was feasible
-# if mpcApproach1.feasible == 1:
-# 	plt.figure()
-# 	plt.plot(x_cl_1[:,0], x_cl_1[:,1], '-ob', label = "Closed Loop")
-# 	for i in range(0, maxTime):
-# 		if i == 0:
-# 			plt.plot(xPredApp1[i][:,0], xPredApp1[i][:,1], '--.r', label="Predicted Trajectoires")	
-# 		else:
-# 			plt.plot(xPredApp1[i][:,0], xPredApp1[i][:,1], '--.r')	
+# Plot the results if the MPC problem was feasible
+if mpcApproach1.feasible == 1:
+	plt.figure()
+	plt.plot(x_cl_1[:,0], x_cl_1[:,1], '-ob', label = "Closed Loop")
+	for i in range(0, maxTime):
+		if i == 0:
+			plt.plot(xPredApp1[i][:,0], xPredApp1[i][:,1], '--.r', label="Predicted Trajectoires")	
+		else:
+			plt.plot(xPredApp1[i][:,0], xPredApp1[i][:,1], '--.r')	
 
-# 	plt.xlabel('$x_1$')
-# 	plt.ylabel('$x_2$')
-# 	plt.legend()
-# plt.show()
+	plt.xlabel('$x_1$')
+	plt.ylabel('$x_2$')
+	plt.legend()
+plt.show()
 
 # =======================================================================================
 # ============== Approach 2 =============================================================
@@ -150,13 +155,15 @@ plt.figure()
 terminalSetApproach2.plot2DPolytope('r', '$\mathcal{O}_\infty$')
 NStepControllable[0].plot2DPolytope('b', '$\mathcal{K}_3(\{0\})$')
 NStepControllable[1].plot2DPolytope('k', '$\mathcal{K}_3(\mathcal{O}_\infty)$')
-plt.plot(..., 'or', label='Initial condition part 1')
-plt.plot(..., 'sb', label='Initial condition part 2')
+plt.plot([2], [-1], 'or', label='Initial condition part 1')
+plt.plot([13], [-5.5], 'sb', label='Initial condition part 2')
 plt.xlabel('$x_1$')
 plt.ylabel('$x_2$')
 plt.legend()
 
+plt.title('Comparison of region of attractions for varying terminals sets')
 plt.show()
+plt.savefig('HW2_pb2_2.png')
 
 # explan stabilty
 # 2.1 two sentences - if processed the proof it is only = 0 when you actually reach the goal, 
