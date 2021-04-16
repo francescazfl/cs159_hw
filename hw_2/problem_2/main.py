@@ -13,133 +13,139 @@ A = np.array([[1.2, 1],
 B = np.array([[0], 
 			  [1]]);
 n = 2; d = 1;
-# x0      = np.array([2, -1]).T   # initial condition
-x0      = np.array([13, -5.5]).T
+x0      = np.array([2, -1]).T   # initial condition
+# x0      = np.array([13, -5.5]).T
 sys     = system(A, B, x0)
 maxTime = 25
 N       = 3
 
-# for N in range(2,8):
-Q       = np.eye(n)
-R       = np.eye(d)
+for N in range(2,11):
+	Q       = np.eye(n)
+	R       = np.eye(d)
 
-# State constraint set X = \{ x : F_x x \leq b_x \}
-Fx = np.vstack((np.eye(n), -np.eye(n)))
-bx = np.array([15,15]*(2))
+	# State constraint set X = \{ x : F_x x \leq b_x \}
+	Fx = np.vstack((np.eye(n), -np.eye(n)))
+	bx = np.array([15,15]*(2))
 
-# Input constraint set U = \{ u : F_u u \leq b_u \}
-Fu = np.vstack((np.eye(d), -np.eye(d)))
-bu = np.array([1]*2)
+	# Input constraint set U = \{ u : F_u u \leq b_u \}
+	Fu = np.vstack((np.eye(d), -np.eye(d)))
+	bu = np.array([1]*2)
 
-# # =======================================================================================
-# # ============== Approach 1 =============================================================
-# # =======================================================================================
-# Hint: the terminal set is X_f =\{x | F_f x <= b_f\}
-# These are derived by thinking about the number of minimal intersecting polytopes 
-# extract only the origin
-Ff = np.array( [ [1,  -1],
-                 [-1,  1],
-                 [1,   1] ] )
-bf = np.array([[0], [0], [0]]) 
-Qf = np.array([ [1, 1],
-                [1, 1] ] ) #This doesn't matter since \mathscr{X}_f = {0}
+	# # =======================================================================================
+	# # ============== Approach 1 =============================================================
+	# # =======================================================================================
+	# Hint: the terminal set is X_f =\{x | F_f x <= b_f\}
+	# These are derived by thinking about the number of minimal intersecting polytopes 
+	# extract only the origin
+	Ff = np.array( [ [1,  -1],
+					[-1,  1],
+					[1,   1] ] )
+	bf = np.array([[0], [0], [0]]) 
+	Qf = np.array([ [1, 1],
+					[1, 1] ] ) #This doesn't matter since \mathscr{X}_f = {0}
 
-printLevel = 1
-mpcApproach1 = FTOCP(N, A, B, Q, R, Qf, Fx, bx, Fu, bu, Ff, bf, printLevel)
+	printLevel = 1
+	mpcApproach1 = FTOCP(N, A, B, Q, R, Qf, Fx, bx, Fu, bu, Ff, bf, printLevel)
 
-# Run a closed-loop simulation
-sys.reset_IC() # Reset initial conditions
-xPredApp1 = []
-for t in range(0,maxTime): # Time loop
-	xt = sys.x[-1]
-	ut = mpcApproach1.solve(xt)
-	if mpcApproach1.feasible == 0:
-		print("============ The MPC problem is not feasible")
-		break
-	xPredApp1.append(mpcApproach1.xPred)
-	sys.applyInput(ut)
+	# Run a closed-loop simulation
+	sys.reset_IC() # Reset initial conditions
+	xPredApp1 = []
+	for t in range(0,maxTime): # Time loop
+		xt = sys.x[-1]
+		ut = mpcApproach1.solve(xt)
+		if mpcApproach1.feasible == 0:
+			print("============ The MPC problem is not feasible")
+			break
+		xPredApp1.append(mpcApproach1.xPred)
+		sys.applyInput(ut)
 
-x_cl_1 = np.array(sys.x)
+	x_cl_1 = np.array(sys.x)
 
-# Plot the results if the MPC problem was feasible
-if mpcApproach1.feasible == 1:
-	plt.figure()
-	plt.plot(x_cl_1[:,0], x_cl_1[:,1], '-ob', label = "Closed Loop")
-	for i in range(0, maxTime):
-		if i == 0:
-			plt.plot(xPredApp1[i][:,0], xPredApp1[i][:,1], '--.r', label="Predicted Trajectoires")	
-		else:
-			plt.plot(xPredApp1[i][:,0], xPredApp1[i][:,1], '--.r')	
+	# Plot the results if the MPC problem was feasible
+	if mpcApproach1.feasible == 1:
+		plt.figure()
+		plt.plot(x_cl_1[:,0], x_cl_1[:,1], '-ob', label = "Closed Loop")
+		for i in range(0, maxTime):
+			if i == 0:
+				plt.plot(xPredApp1[i][:,0], xPredApp1[i][:,1], '--.r', label="Predicted Trajectoires")	
+			else:
+				plt.plot(xPredApp1[i][:,0], xPredApp1[i][:,1], '--.r')	
 
-	plt.xlabel('$x_1$')
-	plt.ylabel('$x_2$')
-	plt.legend()
-plt.show()
+		plt.xlabel('$x_1$')
+		plt.ylabel('$x_2$')
+		plt.legend()
+		plt.title("x_0 = {0}, N = {1}".format(str(x0), str(N)))
+		plt.savefig("problem_2/approach1_figs/HW2_pb2_1_approach1_N" + str(N) + ".png")
 
-# =======================================================================================
-# ============== Approach 2 =============================================================
-# =======================================================================================
-# Hint: the dlqr function return: i) P which is the solution to the DARE, 
-# ii) the optimal feedback gain K and iii) the closed-loop system matrix Acl = (A-BK)
-P, K, Acl = dlqr(A, B, Q, R)
-Ftot = np.vstack((Fx, np.dot(Fu, -K)))
-btot = np.hstack((bx, bu ))
-Qf = np.eye(n) # filled in here
+	plt.show()
 
-poli = polytope(Ftot, btot)
-F, b = poli.computeO_inf(Acl) # Hint: this function returns F and b so that compute O_inf = \{ x | Fx <= b\}
-# matrix F define the set, want to use the same matrice 
-# matrix define the set
-# O_inf a set if F is identiy, b O all neg value use the similar to 
+	# =======================================================================================
+	# ============== Approach 2 =============================================================
+	# =======================================================================================
+	# Hint: the dlqr function return: i) P which is the solution to the DARE, 
+	# ii) the optimal feedback gain K and iii) the closed-loop system matrix Acl = (A-BK)
+	P, K, Acl = dlqr(A, B, Q, R)
+	Ftot = np.vstack((Fx, np.dot(Fu, -K)))
+	btot = np.hstack((bx, bu ))
+	Qf = np.eye(n) # filled in here
 
-# Hint: the terminal set is X_f =\{x | F_f x <= b_f\}
-Ff = F # filled in here
-bf = b # filled in here
+	poli = polytope(Ftot, btot)
+	F, b = poli.computeO_inf(Acl) 
+	# Hint: this function returns F and b so that compute O_inf = \{ x | Fx <= b\}
+	# matrix F define the set, want to use the same matrice 
+	# matrix define the set
+	# O_inf a set if F is identiy, b O all neg value use the similar to 
 
-terminalSetApproach2 = polytope(Ff, bf)
+	# Hint: the terminal set is X_f =\{x | F_f x <= b_f\}
+	Ff = F # filled in here
+	bf = b # filled in here
 
-mpcApproach2 = FTOCP(N, A, B, Q, R, Qf, Fx, bx, Fu, bu, Ff, bf, printLevel)
+	terminalSetApproach2 = polytope(Ff, bf)
 
-# Simulate the closed-loop system
-sys.reset_IC() # Reset initial conditions
-xPredApp2 = []
-for t in range(0,maxTime): # Time loop
-	xt = sys.x[-1]
-	ut = mpcApproach2.solve(xt)
-	if mpcApproach2.feasible == 0:
-		print("============ The MPC problem is not feasible")
-		break
+	mpcApproach2 = FTOCP(N, A, B, Q, R, Qf, Fx, bx, Fu, bu, Ff, bf, printLevel)
 
-	xPredApp2.append(mpcApproach2.xPred)
-	sys.applyInput(ut)
+	# Simulate the closed-loop system
+	sys.reset_IC() # Reset initial conditions
+	xPredApp2 = []
+	for t in range(0,maxTime): # Time loop
+		xt = sys.x[-1]
+		ut = mpcApproach2.solve(xt)
+		if mpcApproach2.feasible == 0:
+			print("============ The MPC problem is not feasible")
+			break
 
-x_cl_2 = np.array(sys.x)
+		xPredApp2.append(mpcApproach2.xPred)
+		sys.applyInput(ut)
 
-# Plot the results if the MPC problem was feasible
+	x_cl_2 = np.array(sys.x)
 
-if mpcApproach2.feasible == 1:
-	plt.figure()
-	plt.plot(x_cl_2[:,0], x_cl_2[:,1], '-ob', label = "Closed Loop")
-	for i in range(0, maxTime):
-		if i == 0:
-			plt.plot(xPredApp2[i][:,0], xPredApp2[i][:,1], '--.r', label="Predicted Trajectoires")	
-		else:
-			plt.plot(xPredApp2[i][:,0], xPredApp2[i][:,1], '--.r')	
+	# Plot the results if the MPC problem was feasible
 
-	terminalSetApproach2.plot2DPolytope('k','Terminal Set')
-	plt.xlabel('$x_1$')
-	plt.ylabel('$x_2$')
-	plt.legend()
-	plt.title("x_0 = {0}, N = {1}".format(str(x0), str(N)))
+	if mpcApproach2.feasible == 1:
+		plt.figure()
+		plt.plot(x_cl_2[:,0], x_cl_2[:,1], '-ob', label = "Closed Loop")
+		for i in range(0, maxTime):
+			if i == 0:
+				plt.plot(xPredApp2[i][:,0], xPredApp2[i][:,1], '--.r', label="Predicted Trajectoires")	
+			else:
+				plt.plot(xPredApp2[i][:,0], xPredApp2[i][:,1], '--.r')	
 
-plt.show()
+		terminalSetApproach2.plot2DPolytope('k','Terminal Set')
+		plt.xlabel('$x_1$')
+		plt.ylabel('$x_2$')
+		plt.legend()
+		plt.title("x_0 = {0}, N = {1}".format(str(x0), str(N)))
+		plt.savefig("problem_2/approach2_figs/HW2_pb2_1_approach2_N" + str(N) + ".png")
+
+	plt.show()
 
 
 # =======================================================================================
 # ============== Compute the Region of Attraction =======================================
 # =======================================================================================
 
-# First we over-approximate the terminal set used for approach 1 (We do so to have a set which is full dimension)
+# First we over-approximate the terminal set used for approach 1 
+# (We do so to have a set which is full dimension)
 Ff = np.vstack((np.eye(n), -np.eye(n)))
 bf = np.hstack((np.ones(n), np.ones(n)))*0.01
 terminalSetApproach1 = polytope(Ff, bf)
@@ -161,21 +167,6 @@ plt.xlabel('$x_1$')
 plt.ylabel('$x_2$')
 plt.legend()
 
-plt.title('Comparison of region of attractions for varying terminals sets')
-plt.savefig('HW2_pb2_2.png')
+plt.title('Comparison of different ICs and region of attractions for Approach 2')
+plt.savefig('HW2_pb2_2_approach2.png')
 plt.show()
-
-# explan stabilty
-# 2.1 two sentences - if processed the proof it is only = 0 when you actually reach the goal, 
-# # positive def is suffcient
-# choice of qf matters, cali = 0, qf is quand term only eval on x final, if 
-# problem 2 give pretty much everything, use 1-2 sentence we go through the proof 
-# guaratee the stability and feasibility
-# mono decrease fcn not 
-#
-# slides 3 and 4
-# a strategy to represent sets, if constrained and bound can satisfied inequality constrain,
-# the terminal set is bound 
-# F_f is matrix and b_f is vector
-# if set x < 1 f = 1, b = 1, all pts satisfied the inequali are inside the set
-#  
